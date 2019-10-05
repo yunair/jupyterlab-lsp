@@ -1,9 +1,9 @@
 import { DataConnector } from '@jupyterlab/coreutils';
 import {
+  CompletionConnector,
   CompletionHandler,
   ContextConnector,
-  KernelConnector,
-  CompletionConnector
+  KernelConnector
 } from '@jupyterlab/completer';
 import { CodeEditor } from '@jupyterlab/codeeditor';
 import { ReadonlyJSONObject } from '@phosphor/coreutils';
@@ -14,12 +14,9 @@ import { IClientSession } from '@jupyterlab/apputils';
 import { VirtualDocument } from '../../../virtual/document';
 import { VirtualEditor } from '../../../virtual/editor';
 import { CodeMirrorEditor } from '@jupyterlab/codemirror';
-import {
-  IEditorPosition,
-  IRootPosition,
-  IVirtualPosition
-} from '../../../positioning';
+import { IEditorPosition } from '../../../positioning';
 import { LSPConnection } from '../../../connection';
+import { Completion, ILSPRequest } from '../../codemirror/features/completion';
 
 /*
 Feedback: anchor - not clear from docs
@@ -77,12 +74,6 @@ export class LSPConnector extends DataConnector<
       : this._context_connector;
   }
 
-  transform_from_editor_to_root(position: CodeEditor.IPosition): IRootPosition {
-    let cm_editor = (this._editor as CodeMirrorEditor).editor;
-    let cm_start = PositionConverter.ce_to_cm(position) as IEditorPosition;
-    return this.virtual_editor.transform_editor_to_root(cm_editor, cm_start);
-  }
-
   /**
    * Fetch completion requests.
    *
@@ -96,6 +87,8 @@ export class LSPConnector extends DataConnector<
     const cursor = editor.getCursorPosition();
     const token = editor.getTokenForPosition(cursor);
 
+    console.log(token);
+
     if (this.suppress_auto_invoke_in.indexOf(token.type) !== -1) {
       console.log('Suppressing completer auto-invoke in', token.type);
       return;
@@ -104,25 +97,19 @@ export class LSPConnector extends DataConnector<
     const start = editor.getPositionAt(token.offset);
     const end = editor.getPositionAt(token.offset + token.value.length);
 
-    const typed_character = token.value[cursor.column - start.column - 1];
+    let cm_editor = (this._editor as CodeMirrorEditor).editor;
 
-    let start_in_root = this.transform_from_editor_to_root(start);
-    let end_in_root = this.transform_from_editor_to_root(end);
-    let cursor_in_root = this.transform_from_editor_to_root(cursor);
+    const to_cm_editor_position = (position: CodeEditor.IPosition) =>
+      PositionConverter.ce_to_cm(position) as IEditorPosition;
 
-    let virtual_editor = this.virtual_editor;
-
-    // find document for position
-    let document = virtual_editor.document_at_root_position(start_in_root);
-
-    let virtual_start = virtual_editor.root_position_to_virtual_position(
-      start_in_root
-    );
-    let virtual_end = virtual_editor.root_position_to_virtual_position(
-      end_in_root
-    );
-    let virtual_cursor = virtual_editor.root_position_to_virtual_position(
-      cursor_in_root
+    let lsp_request = Completion.generateRequestAt(
+      token.value,
+      to_cm_editor_position(start),
+      to_cm_editor_position(end),
+      to_cm_editor_position(cursor),
+      token.offset,
+      this.virtual_editor,
+      cm_editor
     );
 
     try {
@@ -132,31 +119,17 @@ export class LSPConnector extends DataConnector<
         //  but this is not the job of this extension; nevertheless its better to keep this in
         //  mind to avoid introducing design decisions which would make this impossible
         //  (for other extensions)
-        document.language === this._kernel_language
+        lsp_request.document.language === this._kernel_language
       ) {
         return Promise.all([
           this._kernel_connector.fetch(request),
-          this.hint(
-            token,
-            typed_character,
-            virtual_start,
-            virtual_end,
-            virtual_cursor,
-            document
-          )
+          this.hint(lsp_request)
         ]).then(([kernel, lsp]) =>
           this.merge_replies(kernel, lsp, this._editor)
         );
       }
 
-      return this.hint(
-        token,
-        typed_character,
-        virtual_start,
-        virtual_end,
-        virtual_cursor,
-        document
-      ).catch(e => {
+      return this.hint(lsp_request).catch(e => {
         console.log(e);
         return this.fallback_connector.fetch(request);
       });
@@ -165,14 +138,9 @@ export class LSPConnector extends DataConnector<
     }
   }
 
-  async hint(
-    token: CodeEditor.IToken,
-    typed_character: string,
-    start: IVirtualPosition,
-    end: IVirtualPosition,
-    cursor: IVirtualPosition,
-    document: VirtualDocument
-  ): Promise<CompletionHandler.IReply> {
+  async hint(request: ILSPRequest): Promise<CompletionHandler.IReply> {
+    let { document, offset } = request;
+    let value = request.virtual_token.text;
     let connection = this._connections.get(document.id_path);
 
     // nope - do not do this; we need to get the signature (yes)
@@ -181,18 +149,12 @@ export class LSPConnector extends DataConnector<
     // to the matches...
     // Suggested in https://github.com/jupyterlab/jupyterlab/issues/7044, TODO PR
 
-    console.log(token);
-
     let completion_items: lsProtocol.CompletionItem[] = [];
     await connection
       .getCompletion(
-        cursor,
-        {
-          start,
-          end,
-          text: token.value
-        },
-        typed_character,
+        request.cursor,
+        request.virtual_token,
+        request.typed_character,
         this.trigger_kind
       )
       .then(items => {
@@ -212,7 +174,7 @@ export class LSPConnector extends DataConnector<
       // sortText: "amean"
       let text = match.insertText ? match.insertText : match.label;
 
-      if (text.startsWith(token.value)) {
+      if (text.startsWith(value)) {
         all_non_prefixed = false;
       }
 
@@ -233,8 +195,8 @@ export class LSPConnector extends DataConnector<
       // a different workaround would be to prepend the token.value prefix:
       // text = token.value + text;
       // but it did not work for "from statistics <tab>" and lead to "from statisticsimport" (no space)
-      start: token.offset + (all_non_prefixed ? 1 : 0),
-      end: token.offset + token.value.length,
+      start: offset + (all_non_prefixed ? 1 : 0),
+      end: offset + value.length,
       matches: matches,
       metadata: {
         _jupyter_types_experimental: types
