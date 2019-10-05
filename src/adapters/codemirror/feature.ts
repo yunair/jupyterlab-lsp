@@ -59,6 +59,11 @@ export interface IFeatureCommand {
 }
 
 export interface ILSPFeature {
+  /**
+   * The identifier of the LSP feature in API and for the config.
+   * Should follow lower-hyphenation format.
+   */
+  id: string;
   is_registered: boolean;
 
   virtual_editor: VirtualEditor;
@@ -95,6 +100,7 @@ export class CodeMirrorLSPFeature implements ILSPFeature {
   protected readonly connection_handlers: Map<string, any>;
   protected readonly wrapper_handlers: Map<string, any>;
   protected wrapper: HTMLElement;
+  public id: string;
 
   constructor(
     public virtual_editor: VirtualEditor,

@@ -10,6 +10,8 @@ import { CodeMirrorLSPFeature } from '../feature';
 const default_severity = 2;
 
 export class Diagnostics extends CodeMirrorLSPFeature {
+  id = 'diagnostics';
+
   register(): void {
     this.connection_handlers.set(
       'diagnostic',

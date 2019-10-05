@@ -13,6 +13,8 @@ export type KeyModifier = 'Alt' | 'Control' | 'Shift' | 'Meta' | 'AltGraph';
 const hover_modifier: KeyModifier = 'Control';
 
 export class Hover extends CodeMirrorLSPFeature {
+  id = 'hover-action';
+
   protected hover_character: IRootPosition;
   private last_hover_response: lsProtocol.Hover;
   private show_next_tooltip: boolean;

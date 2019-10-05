@@ -7,6 +7,7 @@ import { CodeMirrorLSPFeature, IFeatureCommand } from '../feature';
 
 export class Highlights extends CodeMirrorLSPFeature {
   protected highlight_markers: CodeMirror.TextMarker[] = [];
+  id = 'highlights';
 
   static commands: Array<IFeatureCommand> = [
     {

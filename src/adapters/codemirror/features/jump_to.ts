@@ -5,6 +5,8 @@ import { IVirtualPosition } from '../../../positioning';
 import { uri_to_contents_path } from '../../../utils';
 
 export class JumpToDefinition extends CodeMirrorLSPFeature {
+  id = 'jump-to-definition';
+
   static commands: Array<IFeatureCommand> = [
     {
       id: 'jump-to-definition',

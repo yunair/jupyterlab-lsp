@@ -7,6 +7,8 @@ import {
 import { InputDialog } from '@jupyterlab/apputils';
 
 export class Rename extends CodeMirrorLSPFeature {
+  id = 'rename-symbol';
+
   static commands: Array<IFeatureCommand> = [
     {
       id: 'rename-symbol',
