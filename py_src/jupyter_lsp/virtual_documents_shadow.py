@@ -90,6 +90,10 @@ def setup_shadow_filesystem(virtual_documents_uri):
     # create again
     shadow_filesystem.mkdir(parents=True, exist_ok=True)
 
+    @lsp_message_listener("all")
+    async def test(scope, message, languages, manager):
+        print(message)
+
     @lsp_message_listener("client")
     async def shadow_virtual_documents(scope, message, languages, manager):
         """Intercept a message with document contents creating a shadow file for it.
