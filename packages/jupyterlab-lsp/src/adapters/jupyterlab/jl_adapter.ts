@@ -19,28 +19,28 @@ import { LSPConnection } from '../../connection';
 import { LSPConnector } from './components/completion';
 import { CompletionTriggerKind } from '../../lsp';
 import { Completion } from '../codemirror/features/completion';
-import { Diagnostics } from '../codemirror/features/diagnostics';
+// import { Diagnostics } from '../codemirror/features/diagnostics';
 import { Highlights } from '../codemirror/features/highlights';
 import { Hover } from '../codemirror/features/hover';
 import { Signature } from '../codemirror/features/signature';
 import { ILSPFeatureConstructor, ILSPFeature } from '../codemirror/feature';
-import { JumpToDefinition } from '../codemirror/features/jump_to';
+// import { JumpToDefinition } from '../codemirror/features/jump_to';
 import { ICommandContext } from '../../command_manager';
 import { JSONObject } from '@phosphor/coreutils';
 import {
   DocumentConnectionManager,
   IDocumentConnectionData
 } from '../../connection_manager';
-import { Rename } from '../codemirror/features/rename';
+// import { Rename } from '../codemirror/features/rename';
 
 export const lsp_features: Array<ILSPFeatureConstructor> = [
   Completion,
-  Diagnostics,
+  // Diagnostics,
   Highlights,
   Hover,
-  Signature,
-  JumpToDefinition,
-  Rename
+  Signature
+  // JumpToDefinition,
+  // Rename
 ];
 
 export interface IJupyterLabComponentsManager {
