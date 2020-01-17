@@ -36,7 +36,7 @@ export class NotebookAdapter extends JupyterLabWidgetAdapter {
       app,
       editor_widget,
       rendermime_registry,
-      'completer:invoke-notebook',
+      'mfe-completer:invoke-notebook',
       server_root
     );
     this.editor = editor_widget.content;
