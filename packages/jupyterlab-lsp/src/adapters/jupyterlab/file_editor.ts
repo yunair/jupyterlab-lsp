@@ -54,7 +54,7 @@ export class FileEditorAdapter extends JupyterLabWidgetAdapter {
       app,
       editor_widget,
       rendermime_registry,
-      'completer:invoke-file',
+      'mfe-completer:invoke-file',
       server_root
     );
     this.jumper = jumper;
