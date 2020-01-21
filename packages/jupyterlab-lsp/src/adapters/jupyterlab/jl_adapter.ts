@@ -20,9 +20,9 @@ import { LSPConnector } from './components/completion';
 import { CompletionTriggerKind } from '../../lsp';
 import { Completion } from '../codemirror/features/completion';
 // import { Diagnostics } from '../codemirror/features/diagnostics';
-import { Highlights } from '../codemirror/features/highlights';
-import { Hover } from '../codemirror/features/hover';
-import { Signature } from '../codemirror/features/signature';
+// import { Highlights } from '../codemirror/features/highlights';
+// import { Hover } from '../codemirror/features/hover';
+// import { Signature } from '../codemirror/features/signature';
 import { ILSPFeatureConstructor, ILSPFeature } from '../codemirror/feature';
 // import { JumpToDefinition } from '../codemirror/features/jump_to';
 import { ICommandContext } from '../../command_manager';
@@ -34,11 +34,11 @@ import {
 // import { Rename } from '../codemirror/features/rename';
 
 export const lsp_features: Array<ILSPFeatureConstructor> = [
-  Completion,
+  Completion
   // Diagnostics,
-  Highlights,
-  Hover,
-  Signature
+  // Highlights,
+  // Hover,
+  // Signature
   // JumpToDefinition,
   // Rename
 ];
